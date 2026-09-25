@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>基金 GEO 推荐看板</title>
+
+  <link
+    rel="stylesheet"
+    href="./reviewer.css"
+  >
+</head>
+
+<body>
+
+  <main class="dashboard">
+
+    <!-- 页面标题 -->
+    <header class="page-header">
+
+      <div class="title-area">
+        <div class="logo"></div>
+        <h1>基金 GEO 推荐看板</h1>
+      </div>
+
+      <select>
+        <option>近 30 天</option>
+      </select>
+
+    </header>
+
+
+    <!-- 顶部指标 -->
+    <section class="metrics">
+
+      <div class="metric-card">
+        <span>被提及对象数</span>
+        <strong>167</strong>
+      </div>
+
+      <div class="metric-card">
+        <span>总提及次数</span>
+        <strong>1,284</strong>
+      </div>
+
+      <div class="metric-card">
+        <span>平均排名</span>
+        <strong>3.6</strong>
+      </div>
+
+      <div class="metric-card">
+        <span>正向推荐率</span>
+        <strong>72.4%</strong>
+      </div>
+
+    </section>
+
+
+    <!-- 主体区域 -->
+    <section class="content">
+
+      <!-- GEO 推荐榜单 -->
+      <div class="panel main-panel">
+
+        <h2>GEO 推荐榜单</h2>
+
+        <table id="geo-table">
+
+          <thead>
+            <tr>
+              <th>基金名称</th>
+              <th>提及次数</th>
+              <th>平均排名</th>
+              <th>出现率</th>
+            </tr>
+          </thead>
+
+          <tbody>
+
+            <tr>
+              <td>基金A</td>
+              <td>46</td>
+              <td>2.3</td>
+              <td>
+                <span class="rate">18.2%</span>
+              </td>
+            </tr>
+
+            <tr>
+              <td>基金B</td>
+              <td>38</td>
+              <td>3.1</td>
+              <td>
+                <span class="rate">15.0%</span>
+              </td>
+            </tr>
+
+            <tr>
+              <td>基金C</td>
+              <td>31</td>
+              <td>4.0</td>
+              <td>
+                <span class="rate">12.2%</span>
+              </td>
+            </tr>
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+
+      <!-- 右侧 -->
+      <aside class="side-column">
+
+        <div class="panel">
+
+          <h2>来源 TOP 推荐权重</h2>
+
+          <div class="source-item">
+            <span>DeepSeek</span>
+            <strong>37.5%</strong>
+          </div>
+
+          <div class="source-item">
+            <span>豆包</span>
+            <strong>24.9%</strong>
+          </div>
+
+          <div class="source-item">
+            <span>Kimi</span>
+            <strong>22.1%</strong>
+          </div>
+
+          <div class="source-item">
+            <span>通义</span>
+            <strong>15.5%</strong>
+          </div>
+
+        </div>
+
+
+        <div
+          class="panel"
+          id="source-preference"
+        >
+
+          <h2>不同 AI 来源偏好分布</h2>
+
+          <p>
+            多因子分析偏好
+            <span class="source-percent">
+              68%
+            </span>
+          </p>
+
+          <p>
+            量化因子偏好
+            <span class="source-percent">
+              32%
+            </span>
+          </p>
+
+        </div>
+
+      </aside>
+
+    </section>
+
+  </main>
+
+
+  <!-- Reviewer 后续从这里加载 -->
+  <script src="./reviewer.js"></script>
+
+</body>
+
+</html>
