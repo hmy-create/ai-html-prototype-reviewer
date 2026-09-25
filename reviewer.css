@@ -130,3 +130,13 @@ td {
 .source-item strong {
   font-size: 14px;
 }
+
+/* =========================
+   AI HTML Reviewer
+   Hover Highlight
+   ========================= */
+
+.ai-review-hover {
+  outline: 2px solid #1677ff;
+  outline-offset: 2px;
+}
