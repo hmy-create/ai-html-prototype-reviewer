@@ -1,19 +1,24 @@
 // ============================================
 // AI HTML Prototype Reviewer
-// Day 4 - DOM Picker + Context Capture
+// Day 5 - Persistent Review Session
 // ============================================
 
 
-// 当前被选中的真实 DOM
+// 当前正在评审的真实 DOM
 let selectedElement = null;
 
 
-// 已保存的 Review Marks
+// localStorage Key
+const STORAGE_KEY =
+  "ai-html-reviewer-marks-v1";
+
+
+// 所有已保存的 Review Mark
 let marks = [];
 
 
 // ============================================
-// 1. 判断元素是否可以被 Reviewer 操作
+// 1. Basic Helpers
 // ============================================
 
 function isValidElement(element) {
@@ -32,8 +37,8 @@ function isValidElement(element) {
   }
 
 
-  // Reviewer 自己创建的 UI
-  // 绝对不能再次被 Reviewer 选中
+  // Reviewer 自己创建出来的 UI
+  // 不能再次被 Reviewer 选中
   if (
     element.closest(".ai-review-ui")
   ) {
@@ -44,10 +49,6 @@ function isValidElement(element) {
   return true;
 }
 
-
-// ============================================
-// 2. 获取元素可读文本
-// ============================================
 
 function getElementText(element) {
 
@@ -67,14 +68,15 @@ function getElementText(element) {
 
 
 // ============================================
-// 3. Hover Highlight
+// 2. Hover Highlight
 // ============================================
 
 document.addEventListener(
   "mouseover",
   function (event) {
 
-    const element = event.target;
+    const element =
+      event.target;
 
 
     if (!isValidElement(element)) {
@@ -93,7 +95,8 @@ document.addEventListener(
   "mouseout",
   function (event) {
 
-    const element = event.target;
+    const element =
+      event.target;
 
 
     if (!isValidElement(element)) {
@@ -109,7 +112,7 @@ document.addEventListener(
 
 
 // ============================================
-// 4. 获取原始页面中的有效 class
+// 3. Selector Generator
 // ============================================
 
 function getStableClasses(element) {
@@ -118,8 +121,6 @@ function getStableClasses(element) {
     .from(element.classList)
     .filter(function (className) {
 
-      // Reviewer 自己注入的 class
-      // 绝对不能进入 Selector
       return !className.startsWith(
         "ai-review-"
       );
@@ -128,14 +129,9 @@ function getStableClasses(element) {
 }
 
 
-// ============================================
-// 5. 构造单层 Selector
-// ============================================
-
 function buildSelectorSegment(element) {
 
-  // 如果当前元素自己有 ID
-  // ID 永远优先
+  // 当前元素自身有 ID
   if (element.id) {
 
     return (
@@ -149,10 +145,7 @@ function buildSelectorSegment(element) {
     element.tagName.toLowerCase();
 
 
-  // -----------------------------------------
-  // 添加原始 class
-  // -----------------------------------------
-
+  // 原页面已有 class
   const classes =
     getStableClasses(element);
 
@@ -173,15 +166,11 @@ function buildSelectorSegment(element) {
   }
 
 
-  // -----------------------------------------
-  // 如果同一父级存在多个同标签元素
-  // 使用 nth-of-type 区分
-  // -----------------------------------------
-
   const parent =
     element.parentElement;
 
 
+  // 同级存在多个同标签元素
   if (parent) {
 
     const sameTagElements =
@@ -215,16 +204,6 @@ function buildSelectorSegment(element) {
 }
 
 
-// ============================================
-// 6. Selector Generator
-//
-// 规则：
-// 1. 元素自身 ID 优先
-// 2. 否则向上寻找最近 ID
-// 3. ID 作为稳定锚点
-// 4. 无 ID 时构建完整 DOM Path
-// ============================================
-
 function getSelector(element) {
 
   if (!(element instanceof Element)) {
@@ -232,10 +211,7 @@ function getSelector(element) {
   }
 
 
-  // -----------------------------------------
-  // 当前元素本身存在 ID
-  // -----------------------------------------
-
+  // 自身 ID 最高优先级
   if (element.id) {
 
     return (
@@ -247,7 +223,8 @@ function getSelector(element) {
 
   const path = [];
 
-  let current = element;
+  let current =
+    element;
 
 
   while (
@@ -255,11 +232,7 @@ function getSelector(element) {
     current instanceof Element
   ) {
 
-    // ---------------------------------------
-    // 如果当前层已经遇到 ID
-    // 用 ID 锚定并结束
-    // ---------------------------------------
-
+    // 当前层存在 ID
     if (current.id) {
 
       path.unshift(
@@ -267,21 +240,22 @@ function getSelector(element) {
         CSS.escape(current.id)
       );
 
+
       break;
     }
 
 
-    // ---------------------------------------
-    // 添加当前元素路径
-    // ---------------------------------------
-
     path.unshift(
-      buildSelectorSegment(current)
+      buildSelectorSegment(
+        current
+      )
     );
 
 
-    // body 已经是最顶层
-    if (current === document.body) {
+    if (
+      current ===
+      document.body
+    ) {
       break;
     }
 
@@ -290,11 +264,7 @@ function getSelector(element) {
       current.parentElement;
 
 
-    // ---------------------------------------
-    // 父元素有 ID
-    // 直接把 ID 放在路径最前面
-    // ---------------------------------------
-
+    // 最近父元素存在 ID
     if (
       parent &&
       parent.id
@@ -305,25 +275,19 @@ function getSelector(element) {
         CSS.escape(parent.id)
       );
 
+
       break;
     }
 
 
-    current = parent;
+    current =
+      parent;
   }
 
 
-  const selector =
-    path.join(" > ");
-
-
-  return selector;
+  return path.join(" > ");
 }
 
-
-// ============================================
-// 7. Selector Validation
-// ============================================
 
 function validateSelector(
   selector,
@@ -364,10 +328,7 @@ function validateSelector(
 
 
 // ============================================
-// 8. Clean HTML Snapshot
-//
-// Clone DOM 后清理 Reviewer 自己注入的 class。
-// 不修改真实页面 DOM。
+// 4. Clean HTML Snapshot
 // ============================================
 
 function getCleanOuterHTML(element) {
@@ -388,17 +349,17 @@ function getCleanOuterHTML(element) {
       const reviewerClasses =
         Array
           .from(node.classList)
-          .filter(function (
-            className
-          ) {
+          .filter(
+            function (className) {
 
-            return (
-              className.startsWith(
-                "ai-review-"
-              )
-            );
+              return (
+                className.startsWith(
+                  "ai-review-"
+                )
+              );
 
-          });
+            }
+          );
 
 
       reviewerClasses.forEach(
@@ -412,7 +373,7 @@ function getCleanOuterHTML(element) {
       );
 
 
-      // 清理空 class=""
+      // 清理 class=""
       if (
         node.hasAttribute(
           "class"
@@ -434,13 +395,77 @@ function getCleanOuterHTML(element) {
 
 
 // ============================================
-// 9. Create Mark Editor
+// 5. LocalStorage
+// ============================================
+
+function saveMarksToStorage() {
+
+  try {
+
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(marks)
+    );
+
+  } catch (error) {
+
+    console.error(
+      "Failed to save marks:",
+      error
+    );
+  }
+}
+
+
+function loadMarksFromStorage() {
+
+  try {
+
+    const raw =
+      localStorage.getItem(
+        STORAGE_KEY
+      );
+
+
+    if (!raw) {
+      return [];
+    }
+
+
+    const parsed =
+      JSON.parse(raw);
+
+
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+
+    return parsed;
+
+  } catch (error) {
+
+    console.warn(
+      "Failed to load marks:",
+      error
+    );
+
+
+    return [];
+  }
+}
+
+
+// ============================================
+// 6. Create Mark Editor
 // ============================================
 
 function createMarkEditor() {
 
   const overlay =
-    document.createElement("div");
+    document.createElement(
+      "div"
+    );
 
 
   overlay.className =
@@ -458,6 +483,7 @@ function createMarkEditor() {
         </h3>
 
         <button
+          id="ai-review-editor-close"
           class="ai-review-close"
           type="button"
           aria-label="关闭"
@@ -569,7 +595,7 @@ const markEditor =
 
 
 // ============================================
-// 10. Open Mark Editor
+// 7. Open / Close Mark Editor
 // ============================================
 
 function openMarkEditor(element) {
@@ -593,22 +619,31 @@ function openMarkEditor(element) {
     );
 
 
-  const currentElement =
-    document.getElementById(
+  document
+    .getElementById(
       "ai-review-current"
-    );
+    )
+    .textContent =
+      (
+        `${element.tagName.toLowerCase()} · ` +
+        `文本: ${text || "(无文本)"}`
+      );
 
 
-  const selectorElement =
-    document.getElementById(
+  document
+    .getElementById(
       "ai-review-selector"
-    );
+    )
+    .textContent =
+      selector;
 
 
-  const htmlElement =
-    document.getElementById(
+  document
+    .getElementById(
       "ai-review-html"
-    );
+    )
+    .textContent =
+      html;
 
 
   const noteElement =
@@ -617,24 +652,8 @@ function openMarkEditor(element) {
     );
 
 
-  currentElement.textContent =
-    (
-      `${element.tagName.toLowerCase()} · ` +
-      `文本: ${text || "(无文本)"}`
-    );
-
-
-  selectorElement.textContent =
-    selector;
-
-
-  htmlElement.textContent =
-    html;
-
-
-  // 每次打开新的 Mark
-  // 清空上一条输入
-  noteElement.value = "";
+  noteElement.value =
+    "";
 
 
   markEditor.classList.add(
@@ -652,10 +671,6 @@ function openMarkEditor(element) {
   );
 }
 
-
-// ============================================
-// 11. Close Mark Editor
-// ============================================
 
 function closeMarkEditor() {
 
@@ -676,8 +691,8 @@ document
 
 
 document
-  .querySelector(
-    ".ai-review-close"
+  .getElementById(
+    "ai-review-editor-close"
   )
   .addEventListener(
     "click",
@@ -686,7 +701,1201 @@ document
 
 
 // ============================================
-// 12. Save Mark
+// 8. Create Pin Layer
+// ============================================
+
+function createPinLayer() {
+
+  const layer =
+    document.createElement(
+      "div"
+    );
+
+
+  layer.className =
+    "ai-review-ui ai-review-pin-layer";
+
+
+  document.body.appendChild(
+    layer
+  );
+
+
+  return layer;
+}
+
+
+const pinLayer =
+  createPinLayer();
+
+
+// ============================================
+// 9. Render Pins
+// ============================================
+
+function renderPins() {
+
+  pinLayer.innerHTML =
+    "";
+
+
+  marks.forEach(
+    function (mark, index) {
+
+      let target =
+        null;
+
+
+      try {
+
+        target =
+          document.querySelector(
+            mark.selector
+          );
+
+      } catch (error) {
+
+        console.warn(
+          "Invalid Mark selector:",
+          mark.selector
+        );
+
+
+        return;
+      }
+
+
+      if (!target) {
+
+        console.warn(
+          "Mark target not found:",
+          mark.selector
+        );
+
+
+        return;
+      }
+
+
+      const rect =
+        target.getBoundingClientRect();
+
+
+      // 元素不在当前视口内
+      // 暂时不显示 Pin
+      if (
+        rect.bottom < 0 ||
+        rect.top >
+          window.innerHeight ||
+        rect.right < 0 ||
+        rect.left >
+          window.innerWidth
+      ) {
+
+        return;
+      }
+
+
+      const pin =
+        document.createElement(
+          "button"
+        );
+
+
+      pin.type =
+        "button";
+
+
+      pin.className =
+        "ai-review-ui ai-review-pin";
+
+
+      pin.textContent =
+        String(index + 1);
+
+
+      pin.dataset.markId =
+        String(mark.id);
+
+
+      pin.title =
+        (
+          `Review ${index + 1}: ` +
+          `${mark.text || "(无文本)"}`
+        );
+
+
+      pin.style.left =
+        `${
+          Math.max(
+            4,
+            rect.right - 7
+          )
+        }px`;
+
+
+      pin.style.top =
+        `${
+          Math.max(
+            4,
+            rect.top - 7
+          )
+        }px`;
+
+
+      pin.addEventListener(
+        "click",
+        function () {
+
+          openReviewHistory(
+            mark.id
+          );
+
+        }
+      );
+
+
+      pinLayer.appendChild(
+        pin
+      );
+    }
+  );
+}
+
+
+// ============================================
+// 10. Review Floating Button
+// ============================================
+
+function createReviewButton() {
+
+  const button =
+    document.createElement(
+      "button"
+    );
+
+
+  button.type =
+    "button";
+
+
+  button.className =
+    "ai-review-ui ai-review-fab";
+
+
+  button.addEventListener(
+    "click",
+    function () {
+
+      openReviewHistory();
+
+    }
+  );
+
+
+  document.body.appendChild(
+    button
+  );
+
+
+  return button;
+}
+
+
+const reviewButton =
+  createReviewButton();
+
+
+function updateReviewButton() {
+
+  reviewButton.textContent =
+    `Review ${marks.length}`;
+}
+
+
+// ============================================
+// 11. Review History Drawer
+// ============================================
+
+function createReviewDrawer() {
+
+  const drawer =
+    document.createElement(
+      "aside"
+    );
+
+
+  drawer.className =
+    "ai-review-ui ai-review-drawer";
+
+
+  drawer.setAttribute(
+    "aria-label",
+    "Review History"
+  );
+
+
+  drawer.innerHTML = `
+
+    <div class="ai-review-drawer-header">
+
+      <div>
+
+        <h3>
+          Review History
+        </h3>
+
+        <span
+          id="ai-review-history-count"
+          class="ai-review-history-count"
+        >
+        </span>
+
+      </div>
+
+
+      <button
+        id="ai-review-history-close"
+        class="ai-review-close"
+        type="button"
+        aria-label="关闭 Review History"
+      >
+        ×
+      </button>
+
+    </div>
+
+
+    <div
+      id="ai-review-history-list"
+      class="ai-review-history-list"
+    >
+    </div>
+
+
+    <div class="ai-review-drawer-footer">
+
+      <button
+        id="ai-review-clear"
+        class="ai-review-clear-btn"
+        type="button"
+      >
+        清空全部
+      </button>
+
+    </div>
+  `;
+
+
+  document.body.appendChild(
+    drawer
+  );
+
+
+  return drawer;
+}
+
+
+const reviewDrawer =
+  createReviewDrawer();
+// ============================================
+// Day 6 - Copy For AI Button
+// ============================================
+
+function createCopyForAIButton() {
+
+  const footer =
+    reviewDrawer.querySelector(
+      ".ai-review-drawer-footer"
+    );
+
+
+  const button =
+    document.createElement(
+      "button"
+    );
+
+
+  button.type =
+    "button";
+
+
+  button.className =
+    "ai-review-ui ai-review-copy-btn";
+
+
+  button.textContent =
+    "Copy For AI";
+
+
+  button.addEventListener(
+    "click",
+    function () {
+
+      openCopyForAIModal();
+
+    }
+  );
+
+
+  footer.appendChild(
+    button
+  );
+
+
+  return button;
+}
+
+
+const copyForAIButton =
+  createCopyForAIButton();
+
+
+function updateCopyForAIButton() {
+
+  copyForAIButton.disabled =
+    marks.length === 0;
+}
+
+// ============================================
+// Structured Prompt Builder
+// ============================================
+
+function buildCopyForAIPrompt() {
+
+  if (marks.length === 0) {
+    return "";
+  }
+
+
+  const sections =
+    marks.map(
+      function (mark, index) {
+
+        return `
+【修改 ${index + 1}】
+
+目标元素 Selector：
+${mark.selector}
+
+当前文本：
+${mark.text || "(无文本)"}
+
+当前 HTML：
+${mark.html}
+
+修改要求：
+${mark.note}
+        `.trim();
+
+      }
+    );
+
+
+  return `
+请修改当前 HTML 原型。仅修改下列明确标注的元素。
+
+${sections.join("\n\n")}
+
+【约束】
+
+1. 不修改未标注的业务逻辑与数据；
+2. 优先复用现有样式；
+3. 上下文不足时先说明歧义，不要猜测修改。
+  `.trim();
+}
+
+// ============================================
+// Create Copy For AI Modal
+// ============================================
+
+function createCopyForAIModal() {
+
+  const overlay =
+    document.createElement(
+      "div"
+    );
+
+
+  overlay.className =
+    "ai-review-ui ai-review-overlay";
+
+
+  overlay.innerHTML = `
+
+    <div class="ai-review-copy-modal">
+
+      <div class="ai-review-modal-header">
+
+        <h3>
+          Copy For AI
+        </h3>
+
+
+        <button
+          id="ai-review-copy-close"
+          class="ai-review-close"
+          type="button"
+          aria-label="关闭"
+        >
+          ×
+        </button>
+
+      </div>
+
+
+      <div class="ai-review-modal-body">
+
+        <p class="ai-review-copy-description">
+
+          已将 DOM 级修改意见整理为
+          Coding Agent 可直接使用的结构化上下文。
+
+        </p>
+
+
+        <textarea
+          id="ai-review-copy-content"
+          class="ai-review-copy-content"
+          readonly
+        ></textarea>
+
+      </div>
+
+
+      <div class="ai-review-modal-footer">
+
+        <button
+          id="ai-review-copy-back"
+          class="ai-review-btn"
+          type="button"
+        >
+          返回编辑
+        </button>
+
+
+        <button
+          id="ai-review-copy-confirm"
+          class="
+            ai-review-btn
+            ai-review-btn-primary
+          "
+          type="button"
+        >
+          复制到剪贴板
+        </button>
+
+      </div>
+
+    </div>
+  `;
+
+
+  document.body.appendChild(
+    overlay
+  );
+
+
+  return overlay;
+}
+
+
+const copyForAIOverlay =
+  createCopyForAIModal();
+
+// ============================================
+// Open / Close Copy For AI Modal
+// ============================================
+
+function openCopyForAIModal() {
+
+  if (marks.length === 0) {
+    return;
+  }
+
+
+  const prompt =
+    buildCopyForAIPrompt();
+
+
+  const content =
+    document.getElementById(
+      "ai-review-copy-content"
+    );
+
+
+  content.value =
+    prompt;
+
+
+  copyForAIOverlay.classList.add(
+    "is-open"
+  );
+}
+
+
+function closeCopyForAIModal() {
+
+  copyForAIOverlay.classList.remove(
+    "is-open"
+  );
+}
+
+
+document
+  .getElementById(
+    "ai-review-copy-close"
+  )
+  .addEventListener(
+    "click",
+    closeCopyForAIModal
+  );
+
+
+document
+  .getElementById(
+    "ai-review-copy-back"
+  )
+  .addEventListener(
+    "click",
+    closeCopyForAIModal
+  );
+
+// ============================================
+// Success Toast
+// ============================================
+
+function createToast() {
+
+  const toast =
+    document.createElement(
+      "div"
+    );
+
+
+  toast.className =
+    "ai-review-ui ai-review-toast";
+
+
+  toast.textContent =
+    "✓ 已复制，可直接粘贴给 Coding Agent。";
+
+
+  document.body.appendChild(
+    toast
+  );
+
+
+  return toast;
+}
+
+
+const reviewToast =
+  createToast();
+
+
+let toastTimer =
+  null;
+
+
+function showCopyToast() {
+
+  reviewToast.classList.add(
+    "is-visible"
+  );
+
+
+  if (toastTimer) {
+
+    clearTimeout(
+      toastTimer
+    );
+  }
+
+
+  toastTimer =
+    setTimeout(
+      function () {
+
+        reviewToast.classList.remove(
+          "is-visible"
+        );
+
+      },
+      2000
+    );
+}
+// ============================================
+// Clipboard
+// ============================================
+
+async function copyPromptToClipboard() {
+
+  const prompt =
+    buildCopyForAIPrompt();
+
+
+  if (!prompt) {
+    return;
+  }
+
+
+  try {
+
+    await navigator.clipboard.writeText(
+      prompt
+    );
+
+
+    showCopyToast();
+
+
+  } catch (error) {
+
+    console.warn(
+      "Clipboard API failed, using fallback.",
+      error
+    );
+
+
+    fallbackCopyText(
+      prompt
+    );
+  }
+}
+
+function fallbackCopyText(text) {
+
+  const textarea =
+    document.createElement(
+      "textarea"
+    );
+
+
+  textarea.value =
+    text;
+
+
+  textarea.style.position =
+    "fixed";
+
+
+  textarea.style.left =
+    "-9999px";
+
+
+  textarea.className =
+    "ai-review-ui";
+
+
+  document.body.appendChild(
+    textarea
+  );
+
+
+  textarea.select();
+
+
+  try {
+
+    const success =
+      document.execCommand(
+        "copy"
+      );
+
+
+    if (!success) {
+
+      throw new Error(
+        "execCommand copy failed"
+      );
+    }
+
+
+    showCopyToast();
+
+
+  } catch (error) {
+
+    console.error(
+      "Copy failed:",
+      error
+    );
+
+
+    alert(
+      "复制失败，请手动复制 Prompt"
+    );
+
+
+  } finally {
+
+    textarea.remove();
+  }
+}
+document
+  .getElementById(
+    "ai-review-copy-confirm"
+  )
+  .addEventListener(
+    "click",
+    copyPromptToClipboard
+  );
+// ============================================
+// 12. Format Mark Time
+// ============================================
+
+function formatMarkTime(
+  createdAt
+) {
+
+  const time =
+    new Date(
+      createdAt
+    ).getTime();
+
+
+  if (!Number.isFinite(time)) {
+    return "";
+  }
+
+
+  const diff =
+    Date.now() - time;
+
+
+  const minute =
+    60 * 1000;
+
+
+  const hour =
+    60 * minute;
+
+
+  if (diff < minute) {
+
+    return "刚刚";
+  }
+
+
+  if (diff < hour) {
+
+    return (
+      Math.floor(
+        diff / minute
+      ) +
+      " 分钟前"
+    );
+  }
+
+
+  if (
+    diff <
+    24 * hour
+  ) {
+
+    return (
+      Math.floor(
+        diff / hour
+      ) +
+      " 小时前"
+    );
+  }
+
+
+  return new Date(
+    createdAt
+  ).toLocaleString(
+    "zh-CN"
+  );
+}
+
+
+// ============================================
+// 13. Render Review History
+// ============================================
+
+function renderReviewHistory(
+  activeMarkId = null
+) {
+
+  const list =
+    document.getElementById(
+      "ai-review-history-list"
+    );
+
+
+  const count =
+    document.getElementById(
+      "ai-review-history-count"
+    );
+
+
+  list.innerHTML =
+    "";
+
+
+  count.textContent =
+    `${marks.length} 条修改意见`;
+
+
+  // 没有任何 Mark
+  if (marks.length === 0) {
+
+    const empty =
+      document.createElement(
+        "div"
+      );
+
+
+    empty.className =
+      "ai-review-history-empty";
+
+
+    empty.textContent =
+      "暂无修改意见";
+
+
+    list.appendChild(
+      empty
+    );
+
+
+    return;
+  }
+
+
+  marks.forEach(
+    function (mark, index) {
+
+      const item =
+        document.createElement(
+          "div"
+        );
+
+
+      item.className =
+        "ai-review-history-item";
+
+
+      item.dataset.markId =
+        String(mark.id);
+
+
+      if (
+        activeMarkId !== null &&
+        Number(activeMarkId) ===
+          Number(mark.id)
+      ) {
+
+        item.classList.add(
+          "is-active"
+        );
+      }
+
+
+      // ----------------------------
+      // Header
+      // ----------------------------
+
+      const top =
+        document.createElement(
+          "div"
+        );
+
+
+      top.className =
+        "ai-review-history-top";
+
+
+      const target =
+        document.createElement(
+          "div"
+        );
+
+
+      target.className =
+        "ai-review-history-target";
+
+
+      target.textContent =
+        (
+          `${index + 1}  Target: ` +
+          `${mark.text || "(无文本)"}`
+        );
+
+
+      const deleteButton =
+        document.createElement(
+          "button"
+        );
+
+
+      deleteButton.type =
+        "button";
+
+
+      deleteButton.className =
+        "ai-review-delete";
+
+
+      deleteButton.textContent =
+        "删除";
+
+
+      deleteButton.addEventListener(
+        "click",
+        function () {
+
+          deleteMark(
+            mark.id
+          );
+
+        }
+      );
+
+
+      top.appendChild(
+        target
+      );
+
+
+      top.appendChild(
+        deleteButton
+      );
+
+
+      // ----------------------------
+      // Note
+      // ----------------------------
+
+      const note =
+        document.createElement(
+          "div"
+        );
+
+
+      note.className =
+        "ai-review-history-note";
+
+
+      note.textContent =
+        mark.note;
+
+
+      // ----------------------------
+      // Selector
+      // ----------------------------
+
+      const selector =
+        document.createElement(
+          "div"
+        );
+
+
+      selector.className =
+        "ai-review-history-selector";
+
+
+      selector.textContent =
+        mark.selector;
+
+
+      // ----------------------------
+      // Time
+      // ----------------------------
+
+      const time =
+        document.createElement(
+          "div"
+        );
+
+
+      time.className =
+        "ai-review-history-time";
+
+
+      time.textContent =
+        formatMarkTime(
+          mark.createdAt
+        );
+
+
+      // ----------------------------
+      // Assemble Item
+      // ----------------------------
+
+      item.appendChild(
+        top
+      );
+
+
+      item.appendChild(
+        note
+      );
+
+
+      item.appendChild(
+        selector
+      );
+
+
+      item.appendChild(
+        time
+      );
+
+
+      list.appendChild(
+        item
+      );
+    }
+  );
+
+
+  // 如果由 Pin 打开 History
+  // 自动定位对应 Mark
+  if (
+    activeMarkId !== null
+  ) {
+
+    requestAnimationFrame(
+      function () {
+
+        const active =
+          list.querySelector(
+            ".ai-review-history-item.is-active"
+          );
+
+
+        if (active) {
+
+          active.scrollIntoView({
+            block: "nearest"
+          });
+        }
+
+      }
+    );
+  }
+}
+
+
+// ============================================
+// 14. Open / Close Review History
+// ============================================
+
+function openReviewHistory(
+  activeMarkId = null
+) {
+
+  renderReviewHistory(
+    activeMarkId
+  );
+
+
+  reviewDrawer.classList.add(
+    "is-open"
+  );
+}
+
+
+function closeReviewHistory() {
+
+  reviewDrawer.classList.remove(
+    "is-open"
+  );
+}
+
+
+document
+  .getElementById(
+    "ai-review-history-close"
+  )
+  .addEventListener(
+    "click",
+    closeReviewHistory
+  );
+
+
+// ============================================
+// 15. Refresh All Review UI
+// ============================================
+
+function refreshReviewUI() {
+
+  saveMarksToStorage();
+
+  renderPins();
+
+  updateReviewButton();
+
+  renderReviewHistory();
+
+  updateCopyForAIButton();
+}
+
+
+// ============================================
+// 16. Delete Mark
+// ============================================
+
+function deleteMark(markId) {
+
+  marks =
+    marks.filter(
+      function (mark) {
+
+        return (
+          Number(mark.id) !==
+          Number(markId)
+        );
+
+      }
+    );
+
+
+  refreshReviewUI();
+}
+
+
+// ============================================
+// 17. Clear All Marks
+// ============================================
+
+document
+  .getElementById(
+    "ai-review-clear"
+  )
+  .addEventListener(
+    "click",
+    function () {
+
+      if (marks.length === 0) {
+        return;
+      }
+
+
+      const confirmed =
+        window.confirm(
+          "确认清空全部修改意见？"
+        );
+
+
+      if (!confirmed) {
+        return;
+      }
+
+
+      marks = [];
+
+
+      refreshReviewUI();
+    }
+  );
+
+
+// ============================================
+// 18. Save Current Mark
 // ============================================
 
 function saveCurrentMark() {
@@ -727,7 +1936,6 @@ function saveCurrentMark() {
     );
 
 
-  // 保存前再验证一次 Selector
   const selectorValid =
     validateSelector(
       selector,
@@ -735,6 +1943,7 @@ function saveCurrentMark() {
     );
 
 
+  // 保存前再次检查 Selector
   if (!selectorValid) {
 
     console.error(
@@ -784,6 +1993,14 @@ function saveCurrentMark() {
   );
 
 
+  // 一次性更新：
+  // localStorage
+  // Pin
+  // Review Count
+  // History
+  refreshReviewUI();
+
+
   console.log(
     "Saved Mark:",
     mark
@@ -810,25 +2027,20 @@ document
 
 
 // ============================================
-// 13. Ctrl / Command + Click DOM Picker
+// 19. Ctrl / Command + Click DOM Picker
 // ============================================
 
 document.addEventListener(
   "click",
   function (event) {
 
-    // Windows / Linux
-    // Ctrl + Click
-    //
-    // macOS
-    // Command + Click
-
     const isReviewClick =
       event.ctrlKey ||
       event.metaKey;
 
 
-    // 普通点击完全交还给原页面
+    // 普通点击
+    // Reviewer 完全不干预
     if (!isReviewClick) {
       return;
     }
@@ -838,32 +2050,18 @@ document.addEventListener(
       event.target;
 
 
-    // ---------------------------------------
-    // 先判断是不是合法的被评审元素
-    //
-    // 必须放在 preventDefault 前面，
-    // 避免 Reviewer 自己 UI 被 Ctrl 点击时
-    // 误伤自己的按钮。
-    // ---------------------------------------
-
     if (!isValidElement(element)) {
       return;
     }
 
 
-    // ---------------------------------------
-    // Reviewer 接管本次 Click
-    // ---------------------------------------
-
+    // Reviewer 接管本次点击
     event.preventDefault();
 
     event.stopPropagation();
 
 
-    // ---------------------------------------
-    // 移除旧 Selected
-    // ---------------------------------------
-
+    // 移除之前 Selected
     if (selectedElement) {
 
       selectedElement
@@ -874,10 +2072,7 @@ document.addEventListener(
     }
 
 
-    // ---------------------------------------
-    // 保存当前 Selected DOM
-    // ---------------------------------------
-
+    // 保存新的 Selected DOM
     selectedElement =
       element;
 
@@ -889,10 +2084,7 @@ document.addEventListener(
       );
 
 
-    // ---------------------------------------
     // Context Capture
-    // ---------------------------------------
-
     const selector =
       getSelector(
         selectedElement
@@ -918,10 +2110,7 @@ document.addEventListener(
       );
 
 
-    // ---------------------------------------
     // Debug
-    // ---------------------------------------
-
     console.log(
       "=============================="
     );
@@ -968,10 +2157,6 @@ document.addEventListener(
     );
 
 
-    // ---------------------------------------
-    // Selector 不合法时不打开 Editor
-    // ---------------------------------------
-
     if (!selectorValid) {
 
       console.error(
@@ -984,10 +2169,6 @@ document.addEventListener(
     }
 
 
-    // ---------------------------------------
-    // 打开 Mark Editor
-    // ---------------------------------------
-
     openMarkEditor(
       selectedElement
     );
@@ -997,3 +2178,54 @@ document.addEventListener(
   // Capture Phase
   true
 );
+
+
+// ============================================
+// 20. Pin Position Sync
+// ============================================
+
+// 注意：这里只注册一次。
+// 不能放进 saveCurrentMark()。
+
+window.addEventListener(
+  "resize",
+  renderPins
+);
+
+
+window.addEventListener(
+  "scroll",
+  renderPins,
+  true
+);
+
+
+// ============================================
+// 21. Reviewer Init
+// ============================================
+
+function initReviewer() {
+
+  // 从 localStorage 恢复
+  marks =
+    loadMarksFromStorage();
+
+
+  // 恢复所有 Reviewer UI
+  renderPins();
+
+  updateReviewButton();
+
+  renderReviewHistory();
+
+  updateCopyForAIButton();
+
+
+  console.log(
+    "Loaded Marks:",
+    marks
+  );
+}
+
+
+initReviewer();
