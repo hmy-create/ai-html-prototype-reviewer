@@ -9,11 +9,23 @@ let selectedElement = null;
 
 
 // localStorage Key
-const STORAGE_KEY =
+// 每个 HTML 页面独立保存 Review 数据，避免不同 Case 串数据
+
+const STORAGE_PREFIX =
   "ai-html-reviewer-marks-v1";
 
 
+const PAGE_STORAGE_ID =
+  window.location.pathname
+    .replace(/\/+$/, "") || "/";
+
+
+const STORAGE_KEY =
+  `${STORAGE_PREFIX}:${PAGE_STORAGE_ID}`;
+
+
 // 所有已保存的 Review Mark
+
 let marks = [];
 
 

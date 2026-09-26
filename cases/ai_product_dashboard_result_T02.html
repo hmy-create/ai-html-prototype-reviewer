@@ -1,0 +1,1784 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Product Operations Dashboard</title>
+  <link rel="stylesheet" href="../reviewer.css">
+
+  <style>
+    /* =========================================================
+       1. Base
+       ========================================================= */
+    :root {
+      --bg: #f4f6f9;
+      --surface: #ffffff;
+      --surface-soft: #f8fafc;
+      --border: #e6eaf0;
+
+      --text-primary: #172033;
+      --text-secondary: #64748b;
+      --text-muted: #94a3b8;
+
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --primary-soft: #eff6ff;
+
+      --success: #16a34a;
+      --success-soft: #ecfdf3;
+
+      --warning: #d97706;
+      --warning-soft: #fff7ed;
+
+      --danger: #dc2626;
+      --danger-soft: #fef2f2;
+
+      --blue-gray: #64748b;
+
+      --radius-sm: 8px;
+      --radius-md: 10px;
+      --radius-lg: 12px;
+
+      --shadow-card:
+        0 1px 2px rgba(15, 23, 42, 0.04),
+        0 5px 18px rgba(15, 23, 42, 0.05);
+
+      --sidebar-width: 228px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-height: 100%;
+      background: var(--bg);
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text-primary);
+      font-family:
+        Inter,
+        "PingFang SC",
+        "Microsoft YaHei",
+        "Helvetica Neue",
+        Arial,
+        sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    button,
+    select {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    /* =========================================================
+       2. Dashboard Layout
+       ========================================================= */
+    #dashboard-app {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    #sidebar {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 20;
+
+      width: var(--sidebar-width);
+      padding: 22px 16px 18px;
+
+      display: flex;
+      flex-direction: column;
+
+      background: #ffffff;
+      border-right: 1px solid var(--border);
+    }
+
+    .main-content {
+      width: calc(100% - var(--sidebar-width));
+      min-height: 100vh;
+      margin-left: var(--sidebar-width);
+      padding: 28px 32px 40px;
+    }
+
+    .content-shell {
+      width: 100%;
+      max-width: 1440px;
+      margin: 0 auto;
+    }
+
+    /* =========================================================
+       3. Sidebar
+       ========================================================= */
+    .sidebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 30px;
+      padding: 0 4px;
+    }
+
+    .brand-logo {
+      width: 42px;
+      height: 42px;
+      flex: 0 0 42px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      border-radius: 11px;
+      background: linear-gradient(135deg, #2563eb, #3b82f6);
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+      box-shadow: 0 5px 14px rgba(37, 99, 235, 0.22);
+    }
+
+    .brand-copy {
+      min-width: 0;
+    }
+
+    .brand-title {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.35;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .brand-subtitle {
+      margin: 2px 0 0;
+      font-size: 11px;
+      line-height: 1.35;
+      color: var(--text-secondary);
+    }
+
+    .sidebar-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .nav-item {
+      min-height: 42px;
+      padding: 0 12px;
+
+      display: flex;
+      align-items: center;
+      gap: 11px;
+
+      border-radius: 9px;
+      color: var(--text-secondary);
+      font-size: 14px;
+      font-weight: 500;
+
+      cursor: pointer;
+      transition:
+        background 0.18s ease,
+        color 0.18s ease;
+    }
+
+    .nav-item:hover {
+      background: #f8fafc;
+      color: var(--text-primary);
+    }
+
+    .nav-item.active {
+      background: var(--primary-soft);
+      color: var(--primary);
+      font-weight: 650;
+    }
+
+    .nav-icon {
+      width: 18px;
+      height: 18px;
+      flex: 0 0 18px;
+
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+
+      border-radius: 5px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .nav-item.active .nav-icon {
+      background: #dbeafe;
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 16px 12px 4px;
+      border-top: 1px solid var(--border);
+    }
+
+    .environment-label {
+      margin: 0 0 6px;
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 650;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+    }
+
+    .environment-value {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-primary);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .environment-dot {
+      width: 8px;
+      height: 8px;
+      flex: 0 0 8px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 0 3px var(--success-soft);
+    }
+
+    /* =========================================================
+       4. Header
+       ========================================================= */
+    #dashboard-header {
+      margin-bottom: 22px;
+    }
+
+    .header-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 24px;
+    }
+
+    .header-copy {
+      min-width: 0;
+    }
+
+    .header-title {
+      margin: 0;
+      color: var(--text-primary);
+      font-size: 27px;
+      line-height: 1.25;
+      font-weight: 750;
+      letter-spacing: -0.4px;
+    }
+
+    .header-description {
+      margin: 7px 0 0;
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    .header-actions {
+      flex: 0 0 auto;
+
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .time-range-select {
+      min-width: 118px;
+      height: 40px;
+      padding: 0 34px 0 12px;
+
+      border: 1px solid #dbe1e8;
+      border-radius: 9px;
+      outline: none;
+
+      background:
+        linear-gradient(45deg, transparent 50%, #64748b 50%) calc(100% - 15px) 17px / 5px 5px no-repeat,
+        linear-gradient(135deg, #64748b 50%, transparent 50%) calc(100% - 11px) 17px / 5px 5px no-repeat,
+        #ffffff;
+
+      color: var(--text-primary);
+      cursor: pointer;
+      appearance: none;
+
+      transition:
+        border-color 0.18s ease,
+        box-shadow 0.18s ease;
+    }
+
+    .time-range-select:focus {
+      border-color: #93b4f8;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.10);
+    }
+
+    .export-button {
+      height: 40px;
+      padding: 0 16px;
+
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+
+      border-radius: 9px;
+      background: var(--primary);
+      color: #ffffff;
+
+      font-weight: 650;
+      cursor: pointer;
+
+      transition:
+        background 0.18s ease,
+        transform 0.12s ease;
+    }
+
+    .export-button:hover {
+      background: var(--primary-dark);
+    }
+
+    .export-button:active {
+      transform: translateY(1px);
+    }
+
+    #current-data-range {
+      margin: 13px 0 0;
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    /* =========================================================
+       5. Shared Card Styles
+       ========================================================= */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-card);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .card-title-group {
+      min-width: 0;
+    }
+
+    .card-title {
+      margin: 0;
+      color: var(--text-primary);
+      font-size: 16px;
+      line-height: 1.35;
+      font-weight: 700;
+    }
+
+    .card-description {
+      margin: 5px 0 0;
+      color: var(--text-secondary);
+      font-size: 12px;
+    }
+
+    /* =========================================================
+       6. KPI Metrics
+       ========================================================= */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .metric-card {
+      min-height: 145px;
+      padding: 20px;
+
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .metric-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .metric-title {
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .metric-icon {
+      width: 34px;
+      height: 34px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      border-radius: 9px;
+      background: var(--primary-soft);
+      color: var(--primary);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .metric-body {
+      margin-top: 17px;
+    }
+
+    .metric-value {
+      display: block;
+      color: var(--text-primary);
+      font-size: 30px;
+      line-height: 1.08;
+      font-weight: 760;
+      letter-spacing: -0.6px;
+    }
+
+    #metric-badcases .metric-value {
+      color: var(--warning);
+    }
+
+    .metric-change {
+      display: block;
+      margin-top: 8px;
+      color: var(--text-secondary);
+      font-size: 12px;
+    }
+
+    .metric-change.positive {
+      color: var(--success);
+    }
+
+    .metric-change.decrease {
+      color: var(--success);
+    }
+
+    /* =========================================================
+       7. Main Dashboard Grid
+       ========================================================= */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 2.1fr) minmax(290px, 0.9fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .dashboard-primary {
+      min-width: 0;
+    }
+
+    .dashboard-secondary {
+      display: grid;
+      gap: 18px;
+    }
+
+    /* =========================================================
+       8. Agent Performance
+       ========================================================= */
+    #agent-performance-card {
+      padding: 22px 22px;
+    }
+
+    .table-wrapper {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    #agent-performance-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: auto;
+      white-space: nowrap;
+    }
+
+    #agent-performance-table th,
+    #agent-performance-table td {
+      padding: 14px 12px;
+      border-bottom: 1px solid #edf0f4;
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    #agent-performance-table th {
+      background: #fafbfd;
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    #agent-performance-table thead th:first-child {
+      border-top-left-radius: 8px;
+    }
+
+    #agent-performance-table thead th:last-child {
+      border-top-right-radius: 8px;
+    }
+
+    #agent-performance-table tbody tr:last-child td {
+      border-bottom: 0;
+    }
+
+    #agent-performance-table tbody tr {
+      transition: background 0.15s ease;
+    }
+
+    #agent-performance-table tbody tr:hover {
+      background: #fafcff;
+    }
+
+    .agent-name-button {
+      padding: 0;
+      background: transparent;
+      color: var(--primary);
+      font-weight: 650;
+      cursor: pointer;
+    }
+
+    .agent-name-button:hover {
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    .success-rate {
+      display: inline-block;
+      color: var(--text-primary);
+      font-variant-numeric: tabular-nums;
+    }
+
+    #agent-performance-table > tbody > tr:nth-of-type(1) > td:nth-of-type(3) > span.success-rate {
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: var(--primary-soft);
+      color: var(--primary);
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .duration-value {
+      color: var(--blue-gray);
+    }
+
+    .status-badge,
+    .task-status-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+
+      min-height: 26px;
+      padding: 3px 9px;
+
+      border-radius: 999px;
+
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .status-stable {
+      background: var(--success-soft);
+      color: var(--success);
+    }
+
+    .status-watch {
+      background: var(--warning-soft);
+      color: var(--warning);
+    }
+
+    .status-optimize {
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
+
+    /* =========================================================
+       9. Evaluation Overview
+       ========================================================= */
+    #evaluation-summary,
+    #issue-distribution {
+      padding: 20px;
+    }
+
+    .evaluation-stat-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .evaluation-stat {
+      padding: 14px;
+      border-radius: 9px;
+      background: var(--surface-soft);
+      border: 1px solid #edf1f5;
+    }
+
+    .evaluation-stat-label {
+      display: block;
+      color: var(--text-secondary);
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .evaluation-stat-value {
+      display: block;
+      margin-top: 6px;
+      color: var(--text-primary);
+      font-size: 22px;
+      font-weight: 730;
+      line-height: 1.15;
+    }
+
+    .goal-summary {
+      margin-top: 14px;
+      padding: 13px 14px;
+
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+
+      border-radius: 9px;
+      background: var(--primary-soft);
+    }
+
+    .goal-label {
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .goal-rate {
+      color: var(--primary);
+      font-size: 18px;
+      font-weight: 750;
+    }
+
+    /* =========================================================
+       10. Badcase Distribution
+       ========================================================= */
+    .issue-list {
+      display: grid;
+      gap: 17px;
+    }
+
+    .issue-item {
+      display: grid;
+      gap: 7px;
+    }
+
+    .issue-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .issue-label {
+      color: var(--text-primary);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .issue-count {
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .progress-track {
+      height: 7px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #edf1f5;
+    }
+
+    .progress-bar {
+      height: 100%;
+      border-radius: inherit;
+      background: #7da7f8;
+    }
+
+    .progress-100 {
+      width: 100%;
+    }
+
+    .progress-64 {
+      width: 64%;
+    }
+
+    .progress-57 {
+      width: 57%;
+    }
+
+    .progress-43 {
+      width: 43%;
+    }
+
+    /* =========================================================
+       11. Recent Evaluation Tasks
+       ========================================================= */
+    #recent-evaluation-list {
+      margin-top: 18px;
+      padding: 22px;
+    }
+
+    .task-list {
+      display: grid;
+    }
+
+    .task-item {
+      min-height: 76px;
+      padding: 14px 2px;
+
+      display: grid;
+      grid-template-columns: minmax(110px, 0.55fr) minmax(220px, 1.7fr) 100px 70px;
+      gap: 18px;
+      align-items: center;
+
+      border-bottom: 1px solid #edf0f4;
+    }
+
+    .task-item:last-child {
+      border-bottom: 0;
+      padding-bottom: 2px;
+    }
+
+    .task-project {
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    .task-name {
+      color: var(--text-primary);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .task-duration {
+      color: var(--text-secondary);
+      font-size: 12px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .task-passed {
+      background: var(--success-soft);
+      color: var(--success);
+    }
+
+    .task-failed {
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
+
+    .task-review {
+      background: var(--warning-soft);
+      color: var(--warning);
+    }
+
+    /* =========================================================
+       12. Drawer
+       ========================================================= */
+    .drawer-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+
+      background: rgba(15, 23, 42, 0.24);
+
+      opacity: 0;
+      visibility: hidden;
+      transition:
+        opacity 0.2s ease,
+        visibility 0.2s ease;
+    }
+
+    .drawer-overlay.is-open {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    #agent-drawer {
+      position: fixed;
+      top: 0;
+      right: 0;
+      z-index: 90;
+
+      width: min(390px, 92vw);
+      height: 100vh;
+      padding: 24px;
+
+      background: #ffffff;
+      border-left: 1px solid var(--border);
+      box-shadow: -18px 0 40px rgba(15, 23, 42, 0.10);
+
+      transform: translateX(100%);
+      transition: transform 0.22s ease;
+    }
+
+    #agent-drawer.is-open {
+      transform: translateX(0);
+    }
+
+    .drawer-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 20px;
+
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .drawer-heading {
+      margin: 0;
+      color: var(--text-primary);
+      font-size: 21px;
+      font-weight: 750;
+    }
+
+    .drawer-subheading {
+      margin: 5px 0 0;
+      color: var(--text-secondary);
+      font-size: 12px;
+    }
+
+    .drawer-close-icon {
+      width: 34px;
+      height: 34px;
+
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+
+      border-radius: 8px;
+      background: #f6f8fb;
+      color: var(--text-secondary);
+
+      cursor: pointer;
+      font-size: 18px;
+    }
+
+    .drawer-details {
+      display: grid;
+      gap: 0;
+      margin: 20px 0 0;
+    }
+
+    .drawer-detail-row {
+      padding: 15px 0;
+
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 22px;
+
+      border-bottom: 1px solid #eef1f5;
+    }
+
+    .drawer-detail-label {
+      color: var(--text-secondary);
+      font-size: 12px;
+    }
+
+    .drawer-detail-value {
+      color: var(--text-primary);
+      font-size: 13px;
+      font-weight: 650;
+      text-align: right;
+    }
+
+    .drawer-status {
+      color: var(--success);
+    }
+
+    .drawer-actions {
+      margin-top: 24px;
+    }
+
+    .drawer-close-button {
+      width: 100%;
+      height: 40px;
+
+      border: 1px solid #dbe1e8;
+      border-radius: 9px;
+      background: #ffffff;
+      color: var(--text-primary);
+
+      font-weight: 650;
+      cursor: pointer;
+    }
+
+    .drawer-close-button:hover {
+      background: #f8fafc;
+    }
+
+    /* =========================================================
+       13. Toast
+       ========================================================= */
+    #toast-container {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      z-index: 120;
+      pointer-events: none;
+    }
+
+    .toast {
+      min-width: 190px;
+      padding: 13px 16px;
+
+      display: flex;
+      align-items: center;
+      gap: 10px;
+
+      border-radius: 10px;
+      background: #172033;
+      color: #ffffff;
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.2);
+
+      font-size: 13px;
+      font-weight: 600;
+
+      opacity: 0;
+      transform: translateY(12px);
+      transition:
+        opacity 0.18s ease,
+        transform 0.18s ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .toast-dot {
+      width: 8px;
+      height: 8px;
+      flex: 0 0 8px;
+      border-radius: 50%;
+      background: #4ade80;
+    }
+
+    /* =========================================================
+       14. Responsive
+       ========================================================= */
+    @media (max-width: 1180px) {
+      .metrics-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .dashboard-secondary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 860px) {
+      :root {
+        --sidebar-width: 190px;
+      }
+
+      .main-content {
+        padding: 24px 20px 32px;
+      }
+
+      .header-top {
+        flex-direction: column;
+      }
+
+      .header-actions {
+        width: 100%;
+      }
+
+      .time-range-select,
+      .export-button {
+        flex: 1;
+      }
+
+      .dashboard-secondary {
+        grid-template-columns: 1fr;
+      }
+
+      .task-item {
+        grid-template-columns: 1fr;
+        gap: 6px;
+      }
+
+      .task-duration {
+        text-align: left;
+      }
+    }
+
+    @media (max-width: 680px) {
+      #sidebar {
+        position: static;
+        width: 100%;
+        min-height: auto;
+      }
+
+      #dashboard-app {
+        display: block;
+      }
+
+      .main-content {
+        width: 100%;
+        margin-left: 0;
+      }
+
+      .sidebar-nav {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .sidebar-footer {
+        margin-top: 20px;
+      }
+
+      .metrics-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="dashboard-app">
+
+    <!-- =======================================================
+         Sidebar
+         ======================================================= -->
+    <aside id="sidebar" aria-label="Dashboard Navigation">
+      <div class="sidebar-brand">
+        <div class="brand-logo" aria-hidden="true">AI</div>
+
+        <div class="brand-copy">
+          <p class="brand-title">AI Ops</p>
+          <p class="brand-subtitle">AI Product Dashboard</p>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav" aria-label="Primary Navigation">
+        <a class="nav-item active" href="#dashboard-header" aria-current="page">
+          <span class="nav-icon">O</span>
+          <span>Overview</span>
+        </a>
+
+        <a class="nav-item" href="#agent-performance-card">
+          <span class="nav-icon">A</span>
+          <span>Agents</span>
+        </a>
+
+        <a class="nav-item" href="#evaluation-summary">
+          <span class="nav-icon">E</span>
+          <span>Evaluation</span>
+        </a>
+
+        <a class="nav-item" href="#issue-distribution">
+          <span class="nav-icon">B</span>
+          <span>Badcases</span>
+        </a>
+
+        <a class="nav-item" href="#recent-evaluation-list">
+          <span class="nav-icon">T</span>
+          <span>Tasks</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <p class="environment-label">Environment</p>
+        <div class="environment-value">
+          <span class="environment-dot" aria-hidden="true"></span>
+          <span>Production</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- =======================================================
+         Main Content
+         ======================================================= -->
+    <main class="main-content">
+      <div class="content-shell">
+
+        <!-- Header -->
+        <header id="dashboard-header">
+          <div class="header-top">
+            <div class="header-copy">
+              <h1 class="header-title">AI 产品运行与评测看板</h1>
+              <p class="header-description">
+                监控 Agent 使用、效果评测与 Badcase 状态
+              </p>
+            </div>
+
+            <div class="header-actions">
+              <label for="time-range-select" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);">
+                时间范围
+              </label>
+
+              <select
+                id="time-range-select"
+                class="time-range-select"
+                aria-label="选择时间范围"
+              >
+                <option value="7">近 7 天</option>
+                <option value="30" selected>近 30 天</option>
+                <option value="90">近 90 天</option>
+              </select>
+
+              <button
+                id="export-report-button"
+                class="export-button"
+                type="button"
+              >
+                <span aria-hidden="true">⇩</span>
+                <span>导出报告</span>
+              </button>
+            </div>
+          </div>
+
+          <p id="current-data-range">当前数据范围：近 30 天</p>
+        </header>
+
+        <!-- ===================================================
+             KPI Metrics
+             =================================================== -->
+        <section class="metrics-grid" aria-label="核心指标">
+
+          <article id="metric-active-agents" class="card metric-card">
+            <div class="metric-header">
+              <span class="metric-title">活跃 Agent</span>
+              <span class="metric-icon" aria-hidden="true">A</span>
+            </div>
+
+            <div class="metric-body">
+              <strong class="metric-value">12</strong>
+              <small class="metric-change positive">较上期 +2</small>
+            </div>
+          </article>
+
+          <article id="metric-task-count" class="card metric-card">
+            <div class="metric-header">
+              <span class="metric-title">任务执行数</span>
+              <span class="metric-icon" aria-hidden="true">T</span>
+            </div>
+
+            <div class="metric-body">
+              <strong class="metric-value">1,284</strong>
+              <small class="metric-change positive">较上期 +18.6%</small>
+            </div>
+          </article>
+
+          <article id="metric-first-success" class="card metric-card">
+            <div class="metric-header">
+              <span class="metric-title">首轮成功率</span>
+              <span class="metric-icon" aria-hidden="true">S</span>
+            </div>
+
+            <div class="metric-body">
+              <strong class="metric-value">82.4%</strong>
+              <small class="metric-change positive">较上期 +6.2%</small>
+            </div>
+          </article>
+
+          <article id="metric-badcases" class="card metric-card">
+            <div class="metric-header">
+              <span class="metric-title">Badcase 数量</span>
+              <span class="metric-icon" aria-hidden="true">B</span>
+            </div>
+
+            <div class="metric-body">
+              <strong class="metric-value">37</strong>
+              <small class="metric-change decrease">较上期 -12.5%</small>
+            </div>
+          </article>
+
+        </section>
+
+        <!-- ===================================================
+             Main Dashboard Grid
+             =================================================== -->
+        <section class="dashboard-grid">
+
+          <div class="dashboard-primary">
+
+            <!-- Agent Performance -->
+            <article id="agent-performance-card" class="card">
+              <div class="card-header">
+                <div class="card-title-group">
+                  <h2 class="card-title">Agent Performance</h2>
+                  <p class="card-description">
+                    核心 Agent 最近 30 天运行与评测表现
+                  </p>
+                </div>
+              </div>
+
+              <div class="table-wrapper">
+                <table id="agent-performance-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Agent</th>
+                      <th scope="col">任务数</th>
+                      <th scope="col">首轮成功率</th>
+                      <th scope="col">平均轮数</th>
+                      <th scope="col">平均耗时</th>
+                      <th scope="col">状态</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    <tr>
+                      <td>
+                        <button
+                          class="agent-name-button"
+                          type="button"
+                          data-agent="Agent A"
+                          data-status="稳定"
+                          data-owner="产品组 A"
+                          data-version="v1.4.2"
+                          data-updated="2 小时前"
+                        >
+                          Agent A
+                        </button>
+                      </td>
+                      <td>426</td>
+                      <td><span class="success-rate">88.2%</span></td>
+                      <td>1.8</td>
+                      <td><span class="duration-value">12.4s</span></td>
+                      <td>
+                        <span class="status-badge status-stable">稳定</span>
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td>
+                        <button
+                          class="agent-name-button"
+                          type="button"
+                          data-agent="Agent B"
+                          data-status="观察"
+                          data-owner="产品组 B"
+                          data-version="v1.2.8"
+                          data-updated="5 小时前"
+                        >
+                          Agent B
+                        </button>
+                      </td>
+                      <td>351</td>
+                      <td><span class="success-rate">81.6%</span></td>
+                      <td>2.3</td>
+                      <td><span class="duration-value">16.8s</span></td>
+                      <td>
+                        <span class="status-badge status-watch">观察</span>
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td>
+                        <button
+                          class="agent-name-button"
+                          type="button"
+                          data-agent="Agent C"
+                          data-status="待优化"
+                          data-owner="产品组 C"
+                          data-version="v0.9.6"
+                          data-updated="1 天前"
+                        >
+                          Agent C
+                        </button>
+                      </td>
+                      <td>287</td>
+                      <td><span class="success-rate">76.4%</span></td>
+                      <td>2.9</td>
+                      <td><span class="duration-value">21.1s</span></td>
+                      <td>
+                        <span class="status-badge status-optimize">待优化</span>
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td>
+                        <button
+                          class="agent-name-button"
+                          type="button"
+                          data-agent="Agent D"
+                          data-status="稳定"
+                          data-owner="产品组 D"
+                          data-version="v1.3.1"
+                          data-updated="8 小时前"
+                        >
+                          Agent D
+                        </button>
+                      </td>
+                      <td>220</td>
+                      <td><span class="success-rate">84.1%</span></td>
+                      <td>2.1</td>
+                      <td><span class="duration-value">14.5s</span></td>
+                      <td>
+                        <span class="status-badge status-stable">稳定</span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </article>
+
+            <!-- Recent Evaluation Tasks -->
+            <article id="recent-evaluation-list" class="card">
+              <div class="card-header">
+                <div class="card-title-group">
+                  <h2 class="card-title">Recent Evaluation Tasks</h2>
+                  <p class="card-description">
+                    最近执行的产品效果评测与优化任务
+                  </p>
+                </div>
+              </div>
+
+              <div class="task-list">
+
+                <div class="task-item">
+                  <div class="task-project">项目 Alpha</div>
+                  <div class="task-name">更新 FAQ Agent 回答格式</div>
+                  <div>
+                    <span class="task-status-badge task-passed">Passed</span>
+                  </div>
+                  <div class="task-duration">18s</div>
+                </div>
+
+                <div class="task-item">
+                  <div class="task-project">项目 Beta</div>
+                  <div class="task-name">优化知识库检索 Prompt</div>
+                  <div>
+                    <span class="task-status-badge task-failed">Failed</span>
+                  </div>
+                  <div class="task-duration">32s</div>
+                </div>
+
+                <div class="task-item">
+                  <div class="task-project">项目 Gamma</div>
+                  <div class="task-name">调整客服 Agent 拒答策略</div>
+                  <div>
+                    <span class="task-status-badge task-passed">Passed</span>
+                  </div>
+                  <div class="task-duration">21s</div>
+                </div>
+
+                <div class="task-item">
+                  <div class="task-project">项目 Alpha</div>
+                  <div class="task-name">修复表格字段抽取错误</div>
+                  <div>
+                    <span class="task-status-badge task-review">Review</span>
+                  </div>
+                  <div class="task-duration">27s</div>
+                </div>
+
+              </div>
+            </article>
+
+          </div>
+
+          <!-- =================================================
+               Secondary Cards
+               ================================================= -->
+          <aside class="dashboard-secondary">
+
+            <!-- Evaluation Overview -->
+            <article id="evaluation-summary" class="card">
+              <div class="card-header">
+                <div class="card-title-group">
+                  <h2 class="card-title">Evaluation Overview</h2>
+                  <p class="card-description">评测任务整体执行情况</p>
+                </div>
+              </div>
+
+              <div class="evaluation-stat-grid">
+                <div class="evaluation-stat">
+                  <span class="evaluation-stat-label">总评测任务</span>
+                  <strong class="evaluation-stat-value">240</strong>
+                </div>
+
+                <div class="evaluation-stat">
+                  <span class="evaluation-stat-label">通过</span>
+                  <strong class="evaluation-stat-value">198</strong>
+                </div>
+
+                <div class="evaluation-stat">
+                  <span class="evaluation-stat-label">失败</span>
+                  <strong class="evaluation-stat-value">42</strong>
+                </div>
+
+                <div class="evaluation-stat">
+                  <span class="evaluation-stat-label">平均得分</span>
+                  <strong class="evaluation-stat-value">84.7</strong>
+                </div>
+              </div>
+
+              <div class="goal-summary">
+                <span class="goal-label">本周目标完成率</span>
+                <strong class="goal-rate">82.4%</strong>
+              </div>
+            </article>
+
+            <!-- Badcase Distribution -->
+            <article id="issue-distribution" class="card">
+              <div class="card-header">
+                <div class="card-title-group">
+                  <h2 class="card-title">Badcase Distribution</h2>
+                  <p class="card-description">当前主要问题类型分布</p>
+                </div>
+              </div>
+
+              <div class="issue-list">
+
+                <div class="issue-item">
+                  <div class="issue-row">
+                    <span class="issue-label">定位错误</span>
+                    <span class="issue-count">14</span>
+                  </div>
+                  <div class="progress-track" aria-hidden="true">
+                    <div class="progress-bar progress-100"></div>
+                  </div>
+                </div>
+
+                <div class="issue-item">
+                  <div class="issue-row">
+                    <span class="issue-label">上下文不足</span>
+                    <span class="issue-count">9</span>
+                  </div>
+                  <div class="progress-track" aria-hidden="true">
+                    <div class="progress-bar progress-64"></div>
+                  </div>
+                </div>
+
+                <div class="issue-item">
+                  <div class="issue-row">
+                    <span class="issue-label">格式错误</span>
+                    <span class="issue-count">8</span>
+                  </div>
+                  <div class="progress-track" aria-hidden="true">
+                    <div class="progress-bar progress-57"></div>
+                  </div>
+                </div>
+
+                <div class="issue-item">
+                  <div class="issue-row">
+                    <span class="issue-label">业务规则遗漏</span>
+                    <span class="issue-count">6</span>
+                  </div>
+                  <div class="progress-track" aria-hidden="true">
+                    <div class="progress-bar progress-43"></div>
+                  </div>
+                </div>
+
+              </div>
+            </article>
+
+          </aside>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- =========================================================
+       Agent Drawer
+       ========================================================= -->
+  <div
+    id="drawer-overlay"
+    class="drawer-overlay"
+    aria-hidden="true"
+  ></div>
+
+  <aside
+    id="agent-drawer"
+    aria-hidden="true"
+    aria-label="Agent Details"
+  >
+    <div class="drawer-header">
+      <div>
+        <h2 id="drawer-agent-name" class="drawer-heading">Agent A</h2>
+        <p class="drawer-subheading">Agent 运行信息</p>
+      </div>
+
+      <button
+        id="drawer-close-icon"
+        class="drawer-close-icon"
+        type="button"
+        aria-label="关闭详情"
+      >
+        ×
+      </button>
+    </div>
+
+    <div class="drawer-details">
+      <div class="drawer-detail-row">
+        <span class="drawer-detail-label">运行状态</span>
+        <strong
+          id="drawer-agent-status"
+          class="drawer-detail-value drawer-status"
+        >
+          稳定
+        </strong>
+      </div>
+
+      <div class="drawer-detail-row">
+        <span class="drawer-detail-label">Owner</span>
+        <strong
+          id="drawer-agent-owner"
+          class="drawer-detail-value"
+        >
+          产品组 A
+        </strong>
+      </div>
+
+      <div class="drawer-detail-row">
+        <span class="drawer-detail-label">版本</span>
+        <strong
+          id="drawer-agent-version"
+          class="drawer-detail-value"
+        >
+          v1.4.2
+        </strong>
+      </div>
+
+      <div class="drawer-detail-row">
+        <span class="drawer-detail-label">最近更新时间</span>
+        <strong
+          id="drawer-agent-updated"
+          class="drawer-detail-value"
+        >
+          2 小时前
+        </strong>
+      </div>
+    </div>
+
+    <div class="drawer-actions">
+      <button
+        id="drawer-close-button"
+        class="drawer-close-button"
+        type="button"
+      >
+        关闭
+      </button>
+    </div>
+  </aside>
+
+  <!-- =========================================================
+       Toast Container
+       ========================================================= -->
+  <div
+    id="toast-container"
+    role="status"
+    aria-live="polite"
+    aria-atomic="true"
+  ></div>
+
+  <script>
+    /* =========================================================
+       init
+       ========================================================= */
+    function init() {
+      initTimeRange();
+      initToast();
+      initAgentDrawer();
+    }
+
+    document.addEventListener("DOMContentLoaded", init);
+
+    /* =========================================================
+       timeRange
+       ========================================================= */
+    function initTimeRange() {
+      const select = document.getElementById("time-range-select");
+      const rangeText = document.getElementById("current-data-range");
+
+      if (!select || !rangeText) {
+        return;
+      }
+
+      function updateRangeText() {
+        const selectedOption = select.options[select.selectedIndex];
+        rangeText.textContent = "当前数据范围：" + selectedOption.text;
+      }
+
+      select.addEventListener("change", updateRangeText);
+      updateRangeText();
+    }
+
+    /* =========================================================
+       toast
+       ========================================================= */
+    function initToast() {
+      const exportButton = document.getElementById("export-report-button");
+
+      if (!exportButton) {
+        return;
+      }
+
+      exportButton.addEventListener("click", function () {
+        showToast("报告已生成");
+      });
+    }
+
+    function showToast(message) {
+      const container = document.getElementById("toast-container");
+
+      if (!container) {
+        return;
+      }
+
+      const existingToast = container.querySelector(".toast");
+
+      if (existingToast) {
+        existingToast.remove();
+      }
+
+      const toast = document.createElement("div");
+      toast.className = "toast";
+
+      const dot = document.createElement("span");
+      dot.className = "toast-dot";
+      dot.setAttribute("aria-hidden", "true");
+
+      const text = document.createElement("span");
+      text.textContent = message;
+
+      toast.appendChild(dot);
+      toast.appendChild(text);
+      container.appendChild(toast);
+
+      requestAnimationFrame(function () {
+        toast.classList.add("show");
+      });
+
+      window.setTimeout(function () {
+        toast.classList.remove("show");
+
+        window.setTimeout(function () {
+          toast.remove();
+        }, 220);
+      }, 2000);
+    }
+
+    /* =========================================================
+       agentDrawer
+       ========================================================= */
+    function initAgentDrawer() {
+      const agentButtons = document.querySelectorAll(".agent-name-button");
+      const closeIcon = document.getElementById("drawer-close-icon");
+      const closeButton = document.getElementById("drawer-close-button");
+      const overlay = document.getElementById("drawer-overlay");
+
+      agentButtons.forEach(function (button) {
+        button.addEventListener("click", function () {
+          openAgentDrawer(button.dataset);
+        });
+      });
+
+      if (closeIcon) {
+        closeIcon.addEventListener("click", closeAgentDrawer);
+      }
+
+      if (closeButton) {
+        closeButton.addEventListener("click", closeAgentDrawer);
+      }
+
+      if (overlay) {
+        overlay.addEventListener("click", closeAgentDrawer);
+      }
+
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          closeAgentDrawer();
+        }
+      });
+    }
+
+    function openAgentDrawer(agentData) {
+      const drawer = document.getElementById("agent-drawer");
+      const overlay = document.getElementById("drawer-overlay");
+
+      const name = document.getElementById("drawer-agent-name");
+      const status = document.getElementById("drawer-agent-status");
+      const owner = document.getElementById("drawer-agent-owner");
+      const version = document.getElementById("drawer-agent-version");
+      const updated = document.getElementById("drawer-agent-updated");
+
+      if (!drawer || !overlay) {
+        return;
+      }
+
+      if (name) {
+        name.textContent = agentData.agent || "Agent";
+      }
+
+      if (status) {
+        status.textContent = agentData.status || "-";
+      }
+
+      if (owner) {
+        owner.textContent = agentData.owner || "-";
+      }
+
+      if (version) {
+        version.textContent = agentData.version || "-";
+      }
+
+      if (updated) {
+        updated.textContent = agentData.updated || "-";
+      }
+
+      drawer.classList.add("is-open");
+      overlay.classList.add("is-open");
+
+      drawer.setAttribute("aria-hidden", "false");
+      overlay.setAttribute("aria-hidden", "false");
+
+      document.body.style.overflow = "hidden";
+    }
+
+    function closeAgentDrawer() {
+      const drawer = document.getElementById("agent-drawer");
+      const overlay = document.getElementById("drawer-overlay");
+
+      if (!drawer || !overlay) {
+        return;
+      }
+
+      drawer.classList.remove("is-open");
+      overlay.classList.remove("is-open");
+
+      drawer.setAttribute("aria-hidden", "true");
+      overlay.setAttribute("aria-hidden", "true");
+
+      document.body.style.overflow = "";
+    }
+  </script>
+  <script src="../reviewer.js"></script>
+</body>
+</html>
