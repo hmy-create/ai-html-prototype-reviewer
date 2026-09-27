@@ -1,0 +1,21 @@
+task_id,group,task_type,first_round_success,conversation_rounds,time_seconds,wrong_dom_count,collateral_change,final_success,notes
+T02,A,Style,1,1,38,0,0,1,"仅Agent A的88.2%变为蓝色胶囊，原字号保持不变"
+T02,B,Style,1,1,31,0,0,1,"Reviewer精确定位88.2%，仅目标元素变为蓝色胶囊，原字号保持不变"
+T01,A,Layout,1,1,29,0,0,1,
+T01,B,Layout,1,1,38,0,0,1,
+T03,A,Text,1,1,38,0,0,1,
+T03,B,Text,1,1,31,0,0,1,
+T04,A,Style,1,1,39,0,0,1,
+T04,B,Style,1,1,31,0,0,1,
+T05,A,Layout,1,1,25,0,0,1,
+T05,B,Layout,1,1,32,0,0,1,
+T06,A,Style,1,1,32,0,0,1,
+T06,B,Style,1,1,37,0,0,1,
+T07,A,Structure,1,1,35,0,0,1,
+T07,B,Structure,1,1,33,0,0,1,
+T08,A,Style,1,1,26,0,0,1,
+T08,B,Style,1,1,30,0,0,1,
+T09,A,Layout,1,1,36,0,0,1,
+T09,B,Layout,1,1,37,0,0,1,
+T10,A,Text,1,1,30,0,0,1,
+T10,B,Text,1,1,25,0,0,1,

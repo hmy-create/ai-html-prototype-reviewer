@@ -1,0 +1,11 @@
+task_id,group,task_type,first_round_success,conversation_rounds,agent_time_seconds,e2e_time_seconds,wrong_dom_count,collateral_change,final_success,notes
+S01,A,Style,1,1,39,79,0,0,1,
+S01,B,Style,1,1,40,67,0,0,1,
+S02,A,Style,1,1,41,75,0,0,1,
+S02,B,Style,1,1,37,63,0,0,1,
+S03,A,Style,1,1,39,66,0,0,1,
+S03,B,Style,1,1,32,58,0,0,1,
+S04,A,Layout,1,1,27,60,0,0,1,
+S04,B,Layout,1,1,29,56,0,0,1,
+S05,A,Structure,1,1,31,59,0,0,1,
+S05,B,Structure,1,1,27,57,0,0,1,

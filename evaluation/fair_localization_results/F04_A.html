@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AI Product Operations Dashboard</title>
-  <link rel="stylesheet" href="../reviewer.css">
+  <link rel="stylesheet" href="../../reviewer.css">
 
   <style>
     /* =========================================================
@@ -567,15 +567,6 @@
       display: inline-block;
       color: var(--text-primary);
       font-variant-numeric: tabular-nums;
-    }
-
-    #agent-performance-table > tbody > tr:nth-of-type(1) > td:nth-of-type(3) > span.success-rate {
-      padding: 4px 9px;
-      border-radius: 999px;
-      background: var(--primary-soft);
-      color: var(--primary);
-      font-weight: 700;
-      line-height: 1.2;
     }
 
     .duration-value {
@@ -1375,7 +1366,7 @@
                   <div class="task-project">项目 Beta</div>
                   <div class="task-name">优化知识库检索 Prompt</div>
                   <div>
-                    <span class="task-status-badge task-failed">Failed</span>
+                    <span class="task-status-badge task-passed">Passed</span>
                   </div>
                   <div class="task-duration">32s</div>
                 </div>
@@ -1384,7 +1375,7 @@
                   <div class="task-project">项目 Gamma</div>
                   <div class="task-name">调整客服 Agent 拒答策略</div>
                   <div>
-                    <span class="task-status-badge task-passed">Passed</span>
+                    <span class="task-status-badge task-failed">Failed</span>
                   </div>
                   <div class="task-duration">21s</div>
                 </div>
@@ -1779,6 +1770,6 @@
       document.body.style.overflow = "";
     }
   </script>
-  <script src="../reviewer.js"></script>
+  <script src="../../reviewer.js"></script>
 </body>
 </html>
